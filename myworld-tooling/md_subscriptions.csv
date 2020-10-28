@@ -1,2 +1,3 @@
 11;'Spotify';'Spotify Subscriptions';'Music Streaming';{"text": "TEXT"};{"Free": {"Monthly": 0, "Annual": 0}, "Premium": {"Monthly": 10, "Annual": 100}, "Family": {"Monthly": 15, "Annual": 150}}
 12;'Netflix';'Netflix';'Video Streaming';{"text": "TEXT"};{"Single Screen": {"Monthly": 8, "Annual": 80}, "3 screens": {"Monthly": 14, "Annual": 140}}
+20;'Whirlpool';'Whirlpool';'French-door refrigerator warranty';{"text": "TEXT"};{"Default": {"Yearly": 0}}
