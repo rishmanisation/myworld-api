@@ -12,6 +12,37 @@ const userHomesModel = new Model('UD_P_USER_HOMES');
 
 const indexPage = (req, res) => res.status(200).json({ message: testEnvironmentVariable });
 
+// Landing page endpoint. Displays basic user details and top 5 items and subscriptions
+const landingPage = async (req, res) => {
+  try {
+    const userDetails = await userProfileModel.select('USERNAME, FIRST_NAME, LAST_NAME');
+    const username = userDetails.rows[0]["username"]
+    const name = userDetails.rows[0]["first_name"] + ' ' + userDetails.rows[0]["last_name"];
+
+    const itemsQuery = "SELECT A.ITEM_ID, B.MANUFACTURER, B.MODEL "
+     + "FROM UD_P_USER_ITEMS A "
+     + "JOIN MD_ITEMS B ON A.ITEM_ID = B.ITEM_ID LIMIT 5";
+    const topItems = await userItemsModel.executeQuery(itemsQuery)
+
+    const subscQuery = "SELECT A.SUBSC_ID, A.BILLING_MODEL, B.MANUFACTURER "
+    + "FROM UD_P_USER_SUBSCRIPTIONS A "
+    + "JOIN MD_SUBSCRIPTIONS B ON A.SUBSC_ID = B.SUBSC_ID LIMIT 5";
+    const topSubsc = await userSubscModel.executeQuery(subscQuery);
+
+    const response = {
+      "username": username,
+      "name": name,
+      "topItems": topItems.rows,
+      "topSubscriptions": topSubsc.rows
+    }
+
+    res.status(200).json(response);
+  } catch (err) {
+    res.status(500).json({ messages: err.stack });
+  }
+};
+
+// Endpoint to retrieve all user details
 const userDetails = async (req, res) => {
   try {
     const userDetails = await userProfileModel.select('USERNAME, FIRST_NAME, LAST_NAME, EMAIL_ADDRESS, ADDRESS, PHONE_NUMBER, PICTURE');
@@ -21,6 +52,7 @@ const userDetails = async (req, res) => {
   }
 };
 
+// Endpoint to store user template. Work in progress. Currently just returns template JSON.
 const userProfilePage = async (req, res) => {
   try {
     const userNameQuery = await userProfileModel.select('USERNAME, ADDRESS');
@@ -51,18 +83,29 @@ const userProfilePage = async (req, res) => {
   }
 };
 
+// Endpoint for all user items. Warranty info present in DB but query to be modified in order 
+// to return this information.
 const userItemsPage = async (req, res) => {
   try {
-    const userItemsQuery = await userItemsModel.select('*');
+    const itemsQuery = "SELECT A.ITEM_ID, A.PURCHASED_COLOR, A.PURCHASE_DATE, A.PURCHASE_STORE, " 
+     + "A.PURCHASE_LOCATION, B.MANUFACTURER, B.MODEL, B.DESCRIPTION, B.CATEGORY, B.IMAGES, B.MANUAL "
+     + "FROM UD_P_USER_ITEMS A "
+     + "JOIN MD_ITEMS B ON A.ITEM_ID = B.ITEM_ID";
+    const userItemsQuery = await userItemsModel.executeQuery(itemsQuery);
     res.status(200).json({ items: userItemsQuery.rows })
   } catch (err) {
     res.status(500).json({ messages: err.stack });
   }
 };
 
+// Endpoint to return all user subscriptions.
 const userSubscriptionsPage = async (req, res) => {
   try {
-    const userSubscQuery = await userSubscModel.select('*');
+    const subscQuery = "SELECT A.SUBSC_ID, A.BILLING_MODEL, A.BILLING_DATE, A.EXPIRY_DATE, " 
+    + "A.PURCHASE_PRICE, B.MANUFACTURER, B.DESCRIPTION, B.CATEGORY, B.MANUAL "
+    + "FROM UD_P_USER_SUBSCRIPTIONS A "
+    + "JOIN MD_SUBSCRIPTIONS B ON A.SUBSC_ID = B.SUBSC_ID";
+    const userSubscQuery = await userSubscModel.executeQuery(subscQuery);
     res.status(200).json({ subscriptions: userSubscQuery.rows })
   } catch (err) {
     res.status(500).json({ messages: err.stack });
@@ -71,6 +114,7 @@ const userSubscriptionsPage = async (req, res) => {
  
 module.exports = {
     indexPage,
+    landingPage,
     userDetails,
     userProfilePage,
     userItemsPage,

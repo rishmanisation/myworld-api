@@ -4,8 +4,6 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import adapt, register_adapter, AsIs
 import csv
-import pandas as pd
-import numpy as np
 from decimal import Decimal
 import json
 
@@ -24,6 +22,7 @@ foreign_key_mappings = {
 }
 #client = MongoClient('mongodb+srv://rish:rish@rishabhtest-qri9a.mongodb.net/test?retryWrites=true&w=majority')
 
+# Point class for lat-long objects
 class Point(object):
     def __init__(self, x, y):
         self.x = x
@@ -34,6 +33,7 @@ def adapt_point(point):
      y = adapt(point.y).getquoted().decode('utf-8')
      return AsIs("'(%s, %s)'" % (x, y))
 
+# Scripts to create the tables in the database
 def create_commands(tables_file):
     commands = []
     cols = []
@@ -73,6 +73,7 @@ def create_commands(tables_file):
         
         return commands, cols, col_types
 
+# Scripts to load the sample data into the database
 def insert_into(table_name, values_file, cur, cols, col_types):
     insert_query = 'INSERT INTO ' + table_name + '('
     '''
@@ -106,6 +107,7 @@ def insert_into(table_name, values_file, cur, cols, col_types):
             values.append(tuple(data))
     cur.executemany(insert_query, values)
 
+# Function to populate the template JSON
 def populate_user_homes(cur, cols, col_types):
     username = 'rkhandewale'
     get_address = "select ADDRESS from UD_P_USER_PROFILE where USERNAME LIKE '%" + username + "%'"

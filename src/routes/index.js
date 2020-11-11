@@ -1,10 +1,11 @@
 import express from 'express';
-import { indexPage, userDetails, userProfilePage, userItemsPage, userSubscriptionsPage } from '../controllers';
+import { indexPage, landingPage, userDetails, userProfilePage, userItemsPage, userSubscriptionsPage } from '../controllers';
 const indexRouter = express.Router();
 
 indexRouter.get('/', indexPage);
+indexRouter.get('/landing', landingPage);
 indexRouter.get('/userDetails', userDetails);
-indexRouter.get('/home', userProfilePage);
+indexRouter.get('/userProfile', userProfilePage);
 indexRouter.get('/items', userItemsPage);
 indexRouter.get('/subscriptions', userSubscriptionsPage);
 
