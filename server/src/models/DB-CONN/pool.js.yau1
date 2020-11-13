@@ -1,0 +1,12 @@
+import { Pool } from 'pg';
+import dotenv from 'dotenv';
+import { connectionString } from '../settings';
+dotenv.config();
+
+export const pool = new Pool({
+    user: 'yau1',
+    host: 'yash-api-db',
+    database: 'yashapi',
+    password: 'pass12',
+    port: '5432'
+});

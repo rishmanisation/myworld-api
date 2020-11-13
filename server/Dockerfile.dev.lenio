@@ -1,0 +1,11 @@
+FROM node:14.15.0
+WORKDIR /server
+COPY package*.json ./
+RUN npm set strict-ssl false
+RUN npm install -g
+COPY . /server
+ENV PORT=3000
+ENV TEST_ENV_VARIABLE="Environment variable is coming across"
+ENV CONNECTION_STRING="postgresql://lenio:1234@yash-db:5432/yash"
+EXPOSE 8085
+CMD ["npm", "run", "startdev"]

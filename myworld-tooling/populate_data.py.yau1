@@ -156,7 +156,7 @@ def populate_user_homes(cur, cols, col_types):
 
 register_adapter(Point, adapt_point)
 
-conn = psycopg2.connect(host="localhost",database="yash", user="lenio", password="1234")
+conn = psycopg2.connect(host="localhost",database="yashapi", user="yau1", password="pass12")
 cur = conn.cursor(cursor_factory=RealDictCursor)
 commands, cols, col_types = create_commands('tables.csv')
 print(commands)

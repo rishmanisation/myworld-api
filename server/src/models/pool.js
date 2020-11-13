@@ -4,9 +4,9 @@ import { connectionString } from '../settings';
 dotenv.config();
 
 export const pool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'myworld',
-    password: 'pwd',
+    user: 'lenio',
+    host: 'yash-db',
+    database: 'yash',
+    password: '1234',
     port: '5432'
 });

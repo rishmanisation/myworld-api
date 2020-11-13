@@ -1,0 +1,29 @@
+version: "3"
+services:
+  yash-api-server:
+    build:
+      context: ./server
+      dockerfile: ./Dockerfile.dev
+    image: yash-api-server
+    container_name: yash-api-server
+    volumes:
+      - ./server:/server
+      - /server/node_modules
+    ports:
+      - "8085:3000"
+    restart: always
+  yash-api-db:
+    build:
+      context: ./db
+      dockerfile: ./Dockerfile
+    image: yash-api-db
+    container_name: yash-api-db
+    environment:
+      POSTGRES_DB: yashapi
+      POSTGRES_USER: yau1
+      POSTGRES_PASSWORD: pass12
+    ports:
+      - "5432:5432"
+    # volumes:
+    #   - ./db/data:/var/lib/postgresql/data
+    restart: always
