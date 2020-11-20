@@ -1,6 +1,8 @@
 import { testEnvironmentVariable } from '../settings';
 import Model from '../models/model';
 import { json } from 'express';
+import * as data from '../../resources/cards.json';
+import { executeQuery } from '../utils/queryFunctions';
 
 const userProfileModel = new Model('UD_P_USER_PROFILE');
 const addrTemplatesModel = new Model('MD_ADDRESS_TEMPLATES');
@@ -11,6 +13,39 @@ const userSubscModel = new Model('UD_P_USER_SUBSCRIPTIONS');
 const userHomesModel = new Model('UD_P_USER_HOMES');
 
 const indexPage = (req, res) => res.status(200).json({ message: testEnvironmentVariable });
+
+const renderCard = async (card) => {
+  try {
+    const params = data[card];
+    const mainModel = new Model(params["mainTable"].toUpp);
+
+    const foreignKeyQuery = await executeQuery('foreignKey', params);
+    const foreignKey = foreignKeyQuery.rows[0]["fk_column"];
+
+    const resultQuery = await mainModel.executeJoinQuery(params, foreignKey);
+
+    return resultQuery.rows;
+  } catch (err) {
+    return { err: err.stack };
+  }
+};
+
+const renderPage = async (req, res) => {
+  try {
+    const cards = req.body["cards"];
+    const response = {
+      [req.body["key"]] : {}
+    };
+
+    for(const card of cards) {
+      response[req.body["key"]][card] = await renderCard(card);
+    }
+
+    return res.status(200).json({ response : response });
+  } catch (err) {
+    return res.status(500).json({ response: err.stack });
+  }
+};
 
 // Landing page endpoint. Displays basic user details and top 5 items and subscriptions
 const landingPage = async (req, res) => {
@@ -113,6 +148,7 @@ const userSubscriptionsPage = async (req, res) => {
 };
  
 module.exports = {
+    renderPage,
     indexPage,
     landingPage,
     userDetails,

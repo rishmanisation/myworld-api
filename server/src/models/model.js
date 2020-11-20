@@ -25,6 +25,22 @@ class Model {
     console.log(query);
     return this.pool.query(query);
   }
+
+  async executeJoinQuery(params, foreignKey) {
+    let mainCols = ``;
+    for(const col of params["mainCols"]) {
+      mainCols = mainCols + `${params["mainTable"]}.${col}, `;
+    }
+
+    let joinCols = ``;
+    for(const col of params["joinCols"]) {
+      joinCols = joinCols + `${params["joinTable"]}.${col}, `;
+    }
+    joinCols = joinCols.slice(0, -2);
+
+    let query = `SELECT ` + mainCols + joinCols + ` FROM ${params["mainTable"]} JOIN ${params["joinTable"]} ON ${params["joinTable"]}.${foreignKey} = ${params["mainTable"]}.${foreignKey}`;
+    return this.pool.query(query);
+  }
 }
 
 export default Model;

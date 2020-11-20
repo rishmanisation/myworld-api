@@ -1,0 +1,8 @@
+{
+    "itemCard" : {
+        "mainTable": "ud_p_user_items",
+        "mainCols": ["ITEM_ID"],
+        "joinTable": "md_items",
+        "joinCols": ["MANUFACTURER", "MODEL"]
+    }
+}
