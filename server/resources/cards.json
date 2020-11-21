@@ -4,5 +4,21 @@
         "mainCols": ["ITEM_ID"],
         "joinTable": "md_items",
         "joinCols": ["MANUFACTURER", "MODEL"]
+    },
+
+    "subscriptionCard" : {
+        "mainTable": "ud_p_user_subscriptions",
+        "mainCols": ["SUBSC_ID", "BILLING_MODEL"],
+        "joinTable": "md_subscriptions",
+        "joinCols": ["MANUFACTURER"] 
+    },
+
+    "userDetailsCard": {
+        "mainTable": "ud_p_user_profile",
+        "mainCols": ["USERNAME", "FIRST_NAME", "LAST_NAME", "EMAIL_ADDRESS", "ADDRESS", "PHONE_NUMBER", "PICTURE"]
+    },
+
+    "roomsMDTestCard" : {
+        "mainTable": "md_rooms"
     }
 }

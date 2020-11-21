@@ -1,6 +1,11 @@
 import { pool } from './pool';
 
-
+/**
+ * Model class
+ * 
+ * This class is used as the data model with which the API interacts with the DB.
+ * 
+ */
 class Model {
   constructor(table) {
     this.pool = pool
@@ -8,37 +13,40 @@ class Model {
     this.pool.on('error', (err, client) => `Error, ${err}, on idle client${client}`);
   }
 
-  async select(columns, clause) {
-    let query = `SELECT ${columns} FROM public.${this.table}`;
-    if (clause) query = query + ' ' + clause;
-    console.log(query);
-    return this.pool.query(query);
-  }
-
-  async insertInto(columns, values) {
-    let query = `INSERT INTO ${this.table}(${columns}) VALUES(${values})`;
-    console.log(query);
-    return this.pool.query(query);
-  }
-
-  async executeQuery(query) {
-    console.log(query);
-    return this.pool.query(query);
-  }
-
-  async executeJoinQuery(params, foreignKey) {
+  /**
+   * Function to generate and execute the desired SQL query. 
+   */
+  async executeQuery(params, foreignKey, loggedInUser) {
     let mainCols = ``;
-    for(const col of params["mainCols"]) {
-      mainCols = mainCols + `${params["mainTable"]}.${col}, `;
+    if (params["mainCols"]) {
+      for (const col of params["mainCols"]) {
+        mainCols = mainCols + `${params["mainTable"]}.${col}, `;
+      }
+      mainCols = mainCols.slice(0, -2);
+    } else {
+      mainCols = `*`;
     }
 
     let joinCols = ``;
-    for(const col of params["joinCols"]) {
-      joinCols = joinCols + `${params["joinTable"]}.${col}, `;
+    if (params["joinCols"]) {
+      joinCols = `,`;
+      for (const col of params["joinCols"]) {
+        joinCols = joinCols + `${params["joinTable"]}.${col}, `;
+      }
+      joinCols = joinCols.slice(0, -2);
     }
-    joinCols = joinCols.slice(0, -2);
 
-    let query = `SELECT ` + mainCols + joinCols + ` FROM ${params["mainTable"]} JOIN ${params["joinTable"]} ON ${params["joinTable"]}.${foreignKey} = ${params["mainTable"]}.${foreignKey}`;
+    let query = `SELECT ${mainCols} ${joinCols} FROM ${params["mainTable"]}`;
+    if(params["joinCols"] && foreignKey) {
+      query = query + ` JOIN ${params["joinTable"]} ON ${params["joinTable"]}.${foreignKey} = ${params["mainTable"]}.${foreignKey}`;
+    }
+    
+    if(params["mainTable"].includes("ud")) {
+      query = query + ` WHERE ${params["mainTable"]}.USERNAME LIKE '%${loggedInUser}%'`;
+    }
+
+    console.log(query);
+
     return this.pool.query(query);
   }
 }

@@ -1,13 +1,7 @@
 import express from 'express';
-import { indexPage, renderPage, landingPage, userDetails, userProfilePage, userItemsPage, userSubscriptionsPage } from '../controllers';
+import { renderPage } from '../controllers';
 const indexRouter = express.Router();
 
-indexRouter.get('/', indexPage);
 indexRouter.post('/:path', renderPage);
-indexRouter.get('/landing', landingPage);
-indexRouter.get('/userDetails', userDetails);
-indexRouter.get('/userProfile', userProfilePage);
-indexRouter.get('/items', userItemsPage);
-indexRouter.get('/subscriptions', userSubscriptionsPage);
 
 export default indexRouter;
