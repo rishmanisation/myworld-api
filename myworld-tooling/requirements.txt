@@ -8,3 +8,4 @@ pdfminer
 pymongo
 dnspython
 psycopg2
+airtable-python-wrapper

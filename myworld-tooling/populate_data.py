@@ -209,17 +209,11 @@ select_cols = []
 for col in ['P.'+ c for c in cols[0]] + ['R.' + c for c in cols[1]]:
     if not '_ID' in col:
         select_cols.append(col)
-
 select_query = 'SELECT ' + ','.join(select_cols) + ' FROM PRODUCT_MD P, REVIEWS_MD R WHERE P.PRODUCT_ID = R.PRODUCT_ID'
-
 cur.execute(select_query)
 print(cur.fetchall())
-
-
 cur.close()
 conn.commit()
-
 if conn is not None:
     conn.close()
 '''
-
