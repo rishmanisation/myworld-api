@@ -1,25 +1,14 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import adapt, register_adapter, AsIs
-import csv
 import json
+
 from airtable import Airtable
 
-
-foreign_key_mappings = {
-    'LAYOUT_ID': 'FOREIGN KEY (LAYOUT_ID) REFERENCES MD_LAYOUT_TEMPLATES(LAYOUT_ID)',
-    'TEMPLATE_ID': 'FOREIGN KEY (TEMPLATE_ID) REFERENCES MD_TEMPLATES(TEMPLATE_ID)',
-    'USER_ID': 'FOREIGN KEY (USER_ID) REFERENCES UD_P_USER_PROFILE(USER_ID)',
-    'ITEM_ID': 'FOREIGN KEY (ITEM_ID) REFERENCES MD_ITEMS(ITEM_ID)',
-    'HOME_ID': 'FOREIGN KEY (HOME_ID) REFERENCES UD_P_HOMES(HOME_ID)',
-    'SUBSC_ID': 'FOREIGN KEY (SUBSC_ID) REFERENCES MD_SUBSCRIPTIONS(SUBSC_ID)',
-    'PAYMENT_ID': 'FOREIGN KEY (PAYMENT_ID) REFERENCES MD_PAYMENTS(PAYMENT_ID)',
-    'ISSUE_ID': 'FOREIGN KEY (ISSUE_ID) REFERENCES MD_ISSUES(ISSUE_ID)',
-    'ROOM_ID': 'FOREIGN KEY (ROOM_ID) REFERENCES MD_ROOMS(ROOM_ID)',
-    'WARRANTY_ID': 'FOREIGN KEY (WARRANTY_ID) REFERENCES MD_SUBSCRIPTIONS(SUBSC_ID)'
-}
-
-
+# Point class
+'''
+This class is used to model the lat-long for all coordinate fields in the database.
+'''
 class Point(object):
     def __init__(self, x, y):
         self.x = x
@@ -32,12 +21,18 @@ def adapt_point(point):
     return AsIs("'(%s, %s)'" % (x, y))
 
 
+'''
+Function to generate the create commands for our database.
+'''
 def create_commands(base_key, api_key):
     create_commands = []
     airtable_md = Airtable(base_key, 'Master Data', api_key)
     airtable_ud_p = Airtable(base_key, 'User Data Profile', api_key)
     tables = airtable_md.get_all(sort='Order') + \
         airtable_ud_p.get_all(sort='Order')
+
+    fk_json = open('foreign_key_mappings.json',)
+    foreign_key_mappings = json.load(fk_json)
 
     table_names = []
     for table in tables:
@@ -68,7 +63,9 @@ def create_commands(base_key, api_key):
 
     return create_commands
 
-
+'''
+Functions to generate insert commands and insert the data into the database.
+'''
 def insert_into(cur, base_key, api_key):
     insert_queries = []
     table_values = []
@@ -132,7 +129,9 @@ def insert_into(cur, base_key, api_key):
         '''
         cur.executemany(insert_queries[i], table_values[i])
 
-
+'''
+Function to generate the template json and update this information into the database.
+'''
 def populate_user_homes(cur):
     username = 'rkhandewale'
     get_address = "select ADDRESS from UD_P_USER_PROFILE where USER_ID LIKE '%" + username + "%'"
@@ -182,13 +181,17 @@ def populate_user_homes(cur):
         json.dumps(template_json) + "')"
     cur.execute(insert_query)
 
+pg_config_file = open('postgres_config.json',)
+airtable_config_file = open('airtable_config.json',)
+pg_config = json.load(pg_config_file)
+airtable_config = json.load(airtable_config_file)
 
 register_adapter(Point, adapt_point)
 
-conn = psycopg2.connect(host="localhost", database="myworld",
-                        user="postgres", password="pwd")
+conn = psycopg2.connect(host=pg_config['host'], database=pg_config['database'],
+                        user=pg_config['user'], password=pg_config['password'])
 cur = conn.cursor(cursor_factory=RealDictCursor)
-commands = create_commands('app4vLfX6gaw1Ks2q', 'keyho1LXH3GM7gWJx')
+commands = create_commands(airtable_config['base_key'], airtable_config['api_key'])
 
 for command in commands:
     print(command)
@@ -196,5 +199,5 @@ for command in commands:
 
 conn.commit()
 
-insert_into(cur, 'app4vLfX6gaw1Ks2q', 'keyho1LXH3GM7gWJx')
+insert_into(cur, airtable_config['base_key'], airtable_config['api_key'])
 conn.commit()
