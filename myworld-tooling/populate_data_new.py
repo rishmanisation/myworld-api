@@ -26,8 +26,8 @@ Function to generate the create commands for our database.
 '''
 def create_commands(base_key, api_key):
     create_commands = []
-    airtable_md = Airtable(base_key, 'Master Data', api_key)
-    airtable_ud_p = Airtable(base_key, 'User Data Profile', api_key)
+    airtable_md = Airtable(base_key, 'Master Data Tables', api_key)
+    airtable_ud_p = Airtable(base_key, 'User Data Profile Tables', api_key)
     tables = airtable_md.get_all(sort='Order') + \
         airtable_ud_p.get_all(sort='Order')
 
