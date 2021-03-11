@@ -2,6 +2,16 @@ import Model from '../models/model';
 import * as data from '../../resources/cards.json';
 import { executeQuery } from '../utils/queryFunctions';
 
+const {Storage} = require('@google-cloud/storage');
+
+
+const bucketName = 'rishabh-test-bkt';
+const filename = '../myworld-tooling/tables.csv';
+const destination = 'rishabh_test.csv';
+//const projectId = 'probable-sprite-307302';
+//const keyFile = '/controllers/My First Project-f872cd08333c.json';
+
+const storage = new Storage();
 /**
  * Function to obtain the data from DB based on which card has been requested
  * by the user.
@@ -51,6 +61,30 @@ const renderPage = async (req, res) => {
   }
 };
 
+const uploadPage = async (req, res) => {
+  try {
+    // Uploads a local file to the bucket
+    await storage.bucket(bucketName).upload(filename, {
+      // By setting the option `destination`, you can change the name of the
+      // object you are uploading to a bucket.
+      destination: destination,
+      metadata: {
+        // Enable long-lived HTTP caching headers
+        // Use only if the contents of the file will never change
+        // (If the contents will change, use cacheControl: 'no-cache')
+        cacheControl: 'public, max-age=31536000',
+      },
+    });
+
+    console.log(`${filename} uploaded to ${bucketName}.`);
+    const response = { "status": "Success" };
+    return res.status(200).json({ response: response });
+  } catch (err) {
+    return res.status(500).json({ response: err.stack });
+  }
+}
+
 module.exports = {
-  renderPage
+  renderPage,
+  uploadPage
 } 

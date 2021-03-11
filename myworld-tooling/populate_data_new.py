@@ -69,8 +69,8 @@ Functions to generate insert commands and insert the data into the database.
 def insert_into(cur, base_key, api_key):
     insert_queries = []
     table_values = []
-    airtable_md = Airtable(base_key, 'Master Data', api_key)
-    airtable_ud_p = Airtable(base_key, 'User Data Profile', api_key)
+    airtable_md = Airtable(base_key, 'Master Data Tables', api_key)
+    airtable_ud_p = Airtable(base_key, 'User Data Profile Tables', api_key)
     tables = airtable_md.get_all(sort='Order') + \
         airtable_ud_p.get_all(sort='Order')
 
