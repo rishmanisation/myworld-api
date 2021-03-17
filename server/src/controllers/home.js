@@ -2,16 +2,13 @@ import Model from '../models/model';
 import * as data from '../../resources/cards.json';
 import { executeQuery } from '../utils/queryFunctions';
 
-const {Storage} = require('@google-cloud/storage');
-
-
-const bucketName = 'rishabh-test-bkt';
-const filename = '../myworld-tooling/tables.csv';
-const destination = 'rishabh_test.csv';
-//const projectId = 'probable-sprite-307302';
-//const keyFile = '/controllers/My First Project-f872cd08333c.json';
+const { Storage } = require('@google-cloud/storage');
 
 const storage = new Storage();
+const bucketName = 'rishabh-test-bkt';
+const bucket = storage.bucket(bucketName);
+
+
 /**
  * Function to obtain the data from DB based on which card has been requested
  * by the user.
@@ -61,27 +58,53 @@ const renderPage = async (req, res) => {
   }
 };
 
-const uploadPage = async (req, res) => {
-  try {
-    // Uploads a local file to the bucket
-    await storage.bucket(bucketName).upload(filename, {
-      // By setting the option `destination`, you can change the name of the
-      // object you are uploading to a bucket.
-      destination: destination,
-      metadata: {
-        // Enable long-lived HTTP caching headers
-        // Use only if the contents of the file will never change
-        // (If the contents will change, use cacheControl: 'no-cache')
-        cacheControl: 'public, max-age=31536000',
-      },
-    });
-
-    console.log(`${filename} uploaded to ${bucketName}.`);
-    const response = { "status": "Success" };
-    return res.status(200).json({ response: response });
-  } catch (err) {
-    return res.status(500).json({ response: err.stack });
+const uploadPage = (req, res, next) => {
+  if (!req.files) {
+    res.status(400).send("No file uploaded.");
+    return next();
   }
+  console.log(req.files)
+  let promises = [];
+
+  req.files.forEach((file, index) => {
+    const blob = bucket.file(file.originalname);
+
+    const promise = new Promise((resolve, reject) => {
+      const blobStream = blob.createWriteStream({
+        metadata: {
+          contentType: file.mimetype
+        }
+      });
+
+      blobStream.on("finish", async () => {
+        try {
+          const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+          req.files[index].cloudStorageObject = file.originalname;
+          await blob.makePublic();
+          req.files[index].cloudStoragePublicUrl = publicUrl;
+          resolve();
+        } catch (err) {
+          reject(err);
+        }
+      });
+
+      blobStream.on("error", err => {
+        req.files[index].cloudStorageError = err
+        reject(err);
+      });
+
+      blobStream.end(file.buffer);
+    });
+    promises.push(promise);
+  })
+
+  Promise.all(promises)
+    .then(_ => {
+      promises = [];
+      next();
+    })
+    .catch(next);
+
 }
 
 module.exports = {

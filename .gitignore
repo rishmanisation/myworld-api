@@ -4,4 +4,4 @@ node_modules/
 coverage
 build/
 myworld-tooling/my_env
-server/resources/My First Project-f872cd08333c.json
+server/resources/gcpCredentials.json

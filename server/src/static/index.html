@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<body>
+  <form action='/api/upload' method='POST' enctype='multipart/form-data' id='fileUpload'>
+    <input type="file" multiple name="file" id="file" />
+  </form>
+
+  <p>Selected files:</p>
+
+  <div id="fileList"></div>
+
+  <button type='submit' form='fileUpload'>Upload Files</button>
+
+  <script type="text/javascript">
+    const updateList = function () {
+      var input = document.getElementById('file');
+      var children = "";
+      for (var i = 0; i < input.files.length; ++i) {
+        children += '<li>' + input.files.item(i).name + '</li>';
+        const reader = new FileReader();
+        reader.readAsDataURL(input.files[i]);
+        reader.onload = (file) => {
+          return (e) => {
+            input.files[i].name += e.target.result;
+          }
+        }
+        
+      }
+      document.getElementById('fileList').innerHTML = '<ul>' + children + '</ul>';
+    };
+
+    const getFileValues = function () {
+      const fileURLs = [];
+      for (var i = 0; i < input.files.length; ++i) {
+        const input = document.getElementById('file').files[i];
+        /*
+        const reader = new FileReader();
+        reader.onload = (file) => {
+          return (e) => {
+            fileURLs[i] = "HEY";
+          }
+        }
+        reader.readAsDataURL(input.files[i]);
+        */
+       fileURLs[i] = "HEY";
+      }
+      document.getElementById('fileValues').value = fileURLs;
+    };
+  </script>
+</body>
