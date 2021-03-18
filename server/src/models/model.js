@@ -49,6 +49,13 @@ class Model {
 
     return this.pool.query(query);
   }
+
+  async insertQuery(values) {
+    let query = "INSERT INTO UD_P_UPLOADED_FILES(USER_ID,FILENAME,FILE_GCP_PATH,FILE_HASH,FILETYPE,ISACTIVE) VALUES('" + values["USER_ID"] + "','" + values["FILENAME"] + "','"
+    + values["FILE_GCP_PATH"] + "','" + values["FILE_HASH"] + "','" + values["FILETYPE"] + "','" + values["ISACTIVE"] + "');";
+    console.log(query);
+    return this.pool.query(query);
+  }
 }
 
 export default Model;

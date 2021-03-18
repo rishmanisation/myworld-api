@@ -15,7 +15,7 @@ indexRouter.get('/upload', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'static/index.html'));
 });
 indexRouter.post('/upload', m.array("file"), uploadPage, (req, res, next) => {
-  console.log(req.files);
+  //console.log(req.files);
   res.status(200).json({ files: req.files })
 });
 indexRouter.post('/:path', renderPage);

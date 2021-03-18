@@ -67,7 +67,7 @@ const uploadPage = (req, res, next) => {
   let promises = [];
 
   req.files.forEach((file, index) => {
-    const blob = bucket.file(file.originalname);
+    const blob = bucket.file('uploads/' + file.originalname);
 
     const promise = new Promise((resolve, reject) => {
       const blobStream = blob.createWriteStream({
@@ -82,6 +82,19 @@ const uploadPage = (req, res, next) => {
           req.files[index].cloudStorageObject = file.originalname;
           await blob.makePublic();
           req.files[index].cloudStoragePublicUrl = publicUrl;
+          
+          var model = new Model("UD_P_UPLOADED_FILES");
+          var isactive = (index == 0) ? "Y" : "N";
+          var values = {
+            "USER_ID": "rkhandewale@gmail.com",
+            "FILENAME": file.originalname,
+            "FILE_GCP_PATH": blob.name,
+            "FILE_HASH": "HashGoesHere",
+            "FILETYPE": file.mimetype,
+            "ISACTIVE": isactive
+          }
+          await model.insertQuery(values);
+          
           resolve();
         } catch (err) {
           reject(err);

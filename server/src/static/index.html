@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <body>
   <form action='/api/upload' method='POST' enctype='multipart/form-data' id='fileUpload'>
-    <input type="file" multiple name="file" id="file" />
+    <input type="file" multiple name="file" id="file" onchange="javascript:updateList()" />
   </form>
 
   <p>Selected files:</p>
@@ -16,14 +16,6 @@
       var children = "";
       for (var i = 0; i < input.files.length; ++i) {
         children += '<li>' + input.files.item(i).name + '</li>';
-        const reader = new FileReader();
-        reader.readAsDataURL(input.files[i]);
-        reader.onload = (file) => {
-          return (e) => {
-            input.files[i].name += e.target.result;
-          }
-        }
-        
       }
       document.getElementById('fileList').innerHTML = '<ul>' + children + '</ul>';
     };

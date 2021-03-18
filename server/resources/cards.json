@@ -20,5 +20,9 @@
 
     "roomsMDTestCard" : {
         "mainTable": "md_rooms"
+    },
+
+    "fileUploadCard" : {
+        "mainTable": "ud_p_uploaded_files"
     }
 }

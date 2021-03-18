@@ -39,7 +39,7 @@ def create_commands(base_key, api_key):
         table_names.append(table['fields']['Name'])
 
     for table in table_names:
-        create_command = 'CREATE TABLE ' + table + '('
+        create_command = 'CREATE TABLE IF NOT EXISTS ' + table + '('
         airtable = Airtable(base_key, table, api_key)
         cols = airtable.get_all(sort='Order')
         col_names = [col['fields']['Column'] for col in cols]
