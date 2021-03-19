@@ -1,6 +1,7 @@
 import Model from '../models/model';
 import * as data from '../../resources/cards.json';
 import { executeQuery } from '../utils/queryFunctions';
+import { getFileHash, getFileName, incrementalHash } from '../utils/fileUpload'
 
 const { Storage } = require('@google-cloud/storage');
 
@@ -67,7 +68,7 @@ const uploadPage = (req, res, next) => {
   let promises = [];
 
   req.files.forEach((file, index) => {
-    const blob = bucket.file('uploads/' + file.originalname);
+    const blob = bucket.file(getFileName(req, file));
 
     const promise = new Promise((resolve, reject) => {
       const blobStream = blob.createWriteStream({
@@ -75,6 +76,8 @@ const uploadPage = (req, res, next) => {
           contentType: file.mimetype
         }
       });
+
+      blobStream.end(file.buffer, 'utf-8');
 
       blobStream.on("finish", async () => {
         try {
@@ -86,10 +89,10 @@ const uploadPage = (req, res, next) => {
           var model = new Model("UD_P_UPLOADED_FILES");
           var isactive = (index == 0) ? "Y" : "N";
           var values = {
-            "USER_ID": "rkhandewale@gmail.com",
+            "USER_ID": req.body.username,
             "FILENAME": file.originalname,
             "FILE_GCP_PATH": blob.name,
-            "FILE_HASH": "HashGoesHere",
+            "FILE_HASH": getFileHash(file),
             "FILETYPE": file.mimetype,
             "ISACTIVE": isactive
           }
@@ -106,7 +109,6 @@ const uploadPage = (req, res, next) => {
         reject(err);
       });
 
-      blobStream.end(file.buffer);
     });
     promises.push(promise);
   })

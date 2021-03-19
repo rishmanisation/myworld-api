@@ -1,32 +1,56 @@
-const http = require('http');
-const { PassThrough } = require('stream');
+import MD5 from 'crypto-js/md5';
+import SparkMD5 from 'spark-md5';
 
-const { Storage } = require('@google-cloud/storage');
+const File = require('file-class');
+const FileReader = require('filereader');
 
-/*
-const s3Client = new AWS.S3({
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_KEY,
-  },
-});
-*/
+const getFileName = (req, file) => {
+  console.log(req);
+  var filepath = req.body.username + '/' + req.body.card + '/' + req.body.title + '/' + file.originalname;
+  return filepath;
+}
 
-const storage = new Storage();
+const getFileHash = (buffer) => {
+  return MD5(buffer);
+}
 
-const uploadStream = (filename) => {
-  const pass = PassThrough();
-  storage.bucket('rishabh-test-bkt').upload(pass, {
-    destination: filename,
-    metadata: {
-      cacheControl: 'public, max-age=31536000'
-    }
-  }, (err, data) => {
-    console.log(err, data);
-  });
-  return pass;
-};
+const incrementalHash = (file) => {
+  var blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice,
+      chunkSize = 2097152,                             // Read in chunks of 2MB
+      chunks = Math.ceil(file.size / chunkSize),
+      currentChunk = 0,
+      spark = new SparkMD5.ArrayBuffer(),
+      fileReader = new FileReader();
+
+  fileReader.onload = function (e) {
+      console.log('read chunk nr', currentChunk + 1, 'of', chunks);
+      spark.append(e.target.result);                   // Append array buffer
+      currentChunk++;
+
+      if (currentChunk < chunks) {
+          loadNext();
+      } else {
+          console.log('finished loading');
+          console.info('computed hash', spark.end());  // Compute hash
+      }
+  };
+
+  fileReader.onerror = function () {
+      console.warn('oops, something went wrong.');
+  };
+
+  function loadNext() {
+      var start = currentChunk * chunkSize,
+          end = ((start + chunkSize) >= file.size) ? file.size : start + chunkSize;
+
+      fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
+  }
+
+  loadNext();
+}
 
 module.exports = {
-    uploadStream
+  getFileName,
+  getFileHash,
+  incrementalHash
 }
