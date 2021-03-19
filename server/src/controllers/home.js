@@ -77,7 +77,7 @@ const uploadPage = (req, res, next) => {
         }
       });
 
-      blobStream.end(file.buffer, 'utf-8');
+      blobStream.end(file.buffer);
 
       blobStream.on("finish", async () => {
         try {
