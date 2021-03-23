@@ -23,6 +23,8 @@
     },
 
     "fileUploadCard" : {
-        "mainTable": "ud_p_uploaded_files"
+        "method": "INSERT",
+        "mainTable": "ud_p_uploaded_files",
+        "mainCols": ["USER_ID","FILENAME","FILE_GCP_PATH","FILE_HASH","FILETYPE","ISACTIVE"]
     }
 }

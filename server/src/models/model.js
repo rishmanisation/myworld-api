@@ -50,9 +50,12 @@ class Model {
     return this.pool.query(query);
   }
 
-  async insertQuery(values) {
-    let query = "INSERT INTO UD_P_UPLOADED_FILES(USER_ID,FILENAME,FILE_GCP_PATH,FILE_HASH,FILETYPE,ISACTIVE) VALUES('" + values["USER_ID"] + "','" + values["FILENAME"] + "','"
-    + values["FILE_GCP_PATH"] + "','" + values["FILE_HASH"] + "','" + values["FILETYPE"] + "','" + values["ISACTIVE"] + "');";
+  async insertQuery(params, values) {
+    let query = "INSERT INTO " + params["mainTable"] + " VALUES('";
+    for(var col in mainCols) {
+      query += values[col] + "','";
+    }
+    query = query.substring(0, query.length-2);
     console.log(query);
     return this.pool.query(query);
   }

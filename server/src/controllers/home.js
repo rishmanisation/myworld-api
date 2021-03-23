@@ -1,9 +1,11 @@
 import Model from '../models/model';
 import * as data from '../../resources/cards.json';
 import { executeQuery } from '../utils/queryFunctions';
-import { getFileHash, getFileName, incrementalHash } from '../utils/fileUpload'
+import { getFileName, getFileHashMD5, getFileHashCRC32C } from '../utils/fileUpload'
+import md5 from 'js-md5';
 
 const { Storage } = require('@google-cloud/storage');
+const crypto = require('crypto');
 
 const storage = new Storage();
 const bucketName = 'rishabh-test-bkt';
@@ -14,7 +16,7 @@ const bucket = storage.bucket(bucketName);
  * Function to obtain the data from DB based on which card has been requested
  * by the user.
  */
-const renderCard = async (card, loggedInUser) => {
+const renderCard = async (card, loggedInUser, values) => {
   try {
     const params = data[card];
 
@@ -25,8 +27,13 @@ const renderCard = async (card, loggedInUser) => {
       const foreignKeyQuery = await executeQuery('foreignKey', params);
       foreignKey = foreignKeyQuery.rows[0]["fk_column"];
     }
+    var resultQuery;
+    if(params["method"] === "INSERT") {
+      resultQuery = await mainModel.insertQuery(params, values);
+    } else {
+      resultQuery = await mainModel.executeQuery(params, foreignKey, loggedInUser);
+    }
 
-    const resultQuery = await mainModel.executeQuery(params, foreignKey, loggedInUser);
     return resultQuery.rows;
   } catch (err) {
     return { err: err.stack };
@@ -45,7 +52,7 @@ const renderPage = async (req, res) => {
     };
 
     for (const card of cards) {
-      let resp = await renderCard(card, req.body["loggedInUser"]);
+      let resp = await renderCard(card, req.body["loggedInUser"], []);
       if(resp["err"]) {
         return res.status(500).json({ response: resp["err"] });
       } else {
@@ -64,12 +71,11 @@ const uploadPage = (req, res, next) => {
     res.status(400).send("No file uploaded.");
     return next();
   }
-  console.log(req.files)
+  //console.log(req.files)
   let promises = [];
 
   req.files.forEach((file, index) => {
     const blob = bucket.file(getFileName(req, file));
-
     const promise = new Promise((resolve, reject) => {
       const blobStream = blob.createWriteStream({
         metadata: {
@@ -85,19 +91,20 @@ const uploadPage = (req, res, next) => {
           req.files[index].cloudStorageObject = file.originalname;
           await blob.makePublic();
           req.files[index].cloudStoragePublicUrl = publicUrl;
-          
-          var model = new Model("UD_P_UPLOADED_FILES");
-          var isactive = (index == 0) ? "Y" : "N";
+          //const fileHash = crypto.createHash('md5').update(file.buffer).digest('base64');
+          const fileHash = getFileHashCRC32C(file);
           var values = {
             "USER_ID": req.body.username,
             "FILENAME": file.originalname,
             "FILE_GCP_PATH": blob.name,
-            "FILE_HASH": getFileHash(file),
+            "FILE_HASH": fileHash,
             "FILETYPE": file.mimetype,
-            "ISACTIVE": isactive
+            "ISACTIVE": req.body.isactive
           }
-          await model.insertQuery(values);
-          
+
+          //req.files[index].md5Hash = fileHash;
+          req.files[index].crc32c = fileHash;
+          await renderCard('fileUploadCard', req.body.username, values);
           resolve();
         } catch (err) {
           reject(err);
@@ -110,6 +117,7 @@ const uploadPage = (req, res, next) => {
       });
 
     });
+    
     promises.push(promise);
   })
 
