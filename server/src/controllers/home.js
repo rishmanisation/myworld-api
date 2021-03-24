@@ -2,12 +2,13 @@ import Model from '../models/model';
 import * as data from '../../resources/cards.json';
 import { executeQuery } from '../utils/queryFunctions';
 import { getFileName, getFileHashMD5, getFileHashCRC32C } from '../utils/fileUpload'
-import md5 from 'js-md5';
 
 const { Storage } = require('@google-cloud/storage');
-const crypto = require('crypto');
 
-const storage = new Storage();
+const projectId = 'probable-sprite-307302';
+const keyFile = '../../resources/gcpCredentials.json';
+
+const storage = new Storage({ projectId, keyFile });
 const bucketName = 'rishabh-test-bkt';
 const bucket = storage.bucket(bucketName);
 
@@ -71,53 +72,78 @@ const uploadPage = (req, res, next) => {
     res.status(400).send("No file uploaded.");
     return next();
   }
-  //console.log(req.files)
+
   let promises = [];
 
   req.files.forEach((file, index) => {
     const blob = bucket.file(getFileName(req, file));
-    const promise = new Promise((resolve, reject) => {
-      const blobStream = blob.createWriteStream({
-        metadata: {
-          contentType: file.mimetype
-        }
-      });
+    const fileHashMD5 = getFileHashMD5(file);
+    const fileHashCRC32C = getFileHashCRC32C(file);
 
-      blobStream.end(file.buffer);
-
-      blobStream.on("finish", async () => {
-        try {
-          const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-          req.files[index].cloudStorageObject = file.originalname;
-          await blob.makePublic();
-          req.files[index].cloudStoragePublicUrl = publicUrl;
-          //const fileHash = crypto.createHash('md5').update(file.buffer).digest('base64');
-          const fileHash = getFileHashCRC32C(file);
-          var values = {
-            "USER_ID": req.body.username,
-            "FILENAME": file.originalname,
-            "FILE_GCP_PATH": blob.name,
-            "FILE_HASH": fileHash,
-            "FILETYPE": file.mimetype,
-            "ISACTIVE": req.body.isactive
-          }
-
-          //req.files[index].md5Hash = fileHash;
-          req.files[index].crc32c = fileHash;
-          await renderCard('fileUploadCard', req.body.username, values);
-          resolve();
-        } catch (err) {
-          reject(err);
-        }
-      });
-
-      blobStream.on("error", err => {
-        req.files[index].cloudStorageError = err
-        reject(err);
-      });
-
+    var doesFileNameExist;
+    blob.exists().then((result) => {
+      console.log(result);
+      doesFileNameExist = result;
     });
+
+    var params = {
+      "username": req.body.username,
+      "md5Hash": fileHashMD5,
+      "crc32cHash": fileHashCRC32C
+    }
+    var doesFileContentExist;
+    executeQuery("checkIfFileExists", params).then((result) => {
+
+      doesFileContentExist = (result > 0);
+    });
+
+    var promise;
+    if(doesFileNameExist) {
+      if(doesFileContentExist) {
+        promise = new Promise();
+      }
+    } else {
+        promise = new Promise((resolve, reject) => {
+          const blobStream = blob.createWriteStream({
+            resumable: false,
+            md5Hash: fileHashMD5,
+            crc32c: fileHashCRC32C,
+            metadata: {
+              contentType: file.mimetype
+            }
+          });
     
+          blobStream.end(file.buffer);
+    
+          blobStream.on("finish", async () => {
+            try {
+              const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+              blob.cloudStorageObject = file.originalname;
+              await blob.makePublic();
+              blob.cloudStoragePublicUrl = publicUrl;
+              var values = {
+                "USER_ID": req.body.username,
+                "FILENAME": file.originalname,
+                "FILE_GCP_PATH": blob.name,
+                "FILE_HASH_CRC32C": fileHashCRC32C,
+                "FILE_HASH_MD5": fileHashMD5,
+                "FILETYPE": file.mimetype,
+                "ISACTIVE": req.body.isactive
+              }
+              await renderCard('fileUploadCard', req.body.username, values);
+              resolve();
+            } catch (err) {
+              reject(err);
+            }
+          });
+    
+          blobStream.on("error", err => {
+            blob.cloudStorageError = err
+            reject(err);
+          });
+        });
+    }
+
     promises.push(promise);
   })
 

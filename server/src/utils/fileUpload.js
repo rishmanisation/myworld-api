@@ -1,12 +1,4 @@
-import Base64 from 'crypto-js/enc-base64';
-import Utf8 from 'crypto-js/enc-utf8'
-import MD5 from 'crypto-js/md5';
-import SparkMD5 from 'spark-md5';
-import md5 from 'js-md5';
-
-
-const File = require('file-class');
-const FileReader = require('filereader');
+const crypto = require('crypto');
 const crc32c = require('fast-crc32c');
 
 const getFileName = (req, file) => {
@@ -15,16 +7,7 @@ const getFileName = (req, file) => {
 }
 
 const getFileHashMD5 = (file) => {
-  //return MD5(buffer);
-  //return Base64.stringify(Utf8.parse(SparkMD5.ArrayBuffer.hash(file.buffer)));
-  /*
-  const hashStr = SparkMD5.ArrayBuffer.hash(file.buffer, true);
-  const b64Hash = Buffer.from(hashStr, 'hex').toString('base64');
-  return b64Hash;
-  */
-  console.log(md5(file.buffer));
-  return md5.base64(file.buffer);
-  //return crc32c.calculate(file.buffer);
+  return crypto.createHash('md5').update(file.buffer).digest('base64');
 }
 
 const getFileHashCRC32C = (file) => {

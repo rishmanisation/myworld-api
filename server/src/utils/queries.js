@@ -10,6 +10,15 @@ const getForeignKeyQuery = (mainTable, joinTable) => {
     + mainTable + "' ORDER BY KCU.TABLE_SCHEMA, KCU.TABLE_NAME, KCU.ORDINAL_POSITION";
 };
 
+const checkFileExistsQuery = (username, md5Hash, crc32cHash) => {
+    return `SELECT COUNT(*)`
+    + ` FROM UD_P_UPLOADED_FILES`
+    + ` WHERE USER_ID LIKE '%${username}%'`
+    + ` AND FILE_HASH_MD5 LIKE '%${md5Hash}%'`
+    + ` AND FILE_HASH_CRC32C LIKE '%${crc32cHash}%'`;
+}
+
 module.exports = {
-    getForeignKeyQuery
+    getForeignKeyQuery,
+    checkFileExistsQuery
 }

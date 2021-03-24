@@ -50,6 +50,7 @@ class Model {
     return this.pool.query(query);
   }
 
+
   async insertQuery(params, values) {
     let query = "INSERT INTO " + params["mainTable"] + " VALUES('";
     for(var col in mainCols) {
