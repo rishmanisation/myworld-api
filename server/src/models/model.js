@@ -13,6 +13,9 @@ class Model {
     this.pool.on('error', (err, client) => `Error, ${err}, on idle client${client}`);
   }
 
+  async executeQueryString(query) {
+    return this.pool.query(query);
+  }
   /**
    * Function to generate and execute the desired SQL query. 
    */
