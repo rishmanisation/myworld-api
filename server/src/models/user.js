@@ -65,9 +65,16 @@ exports.isWhitelisted = function (email, callback) {
  * @param {function} callback
  */
 exports.whitelistUser = function (email, callback) {
-    var insertQuery = "insert into ud_p_user_profile(user_id, first_name, last_name) values('" + email + "', 'test', 'user')";
+    var insertQuery = "insert into ud_p_user_profile(user_id, first_name, last_name, password) values('" + email + "', 'test', 'user', 'testpwd')";
     return model.executeQueryString(insertQuery);
 }
+
+exports.findOne = function(email) {
+    var findQuery = `select user_id, password from ud_p_user_profile where user_id = '${email}'`;
+    console.log(findQuery);
+    return model.executeQueryString(findQuery);
+}
+
 /**
  * Generates the payload for a user. Payload consists of current user information, a list of all whitelisted users (for 
  * display on the profile page) and the user's JWT.

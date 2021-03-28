@@ -10,7 +10,7 @@ const { check } = require('express-validator/check');
 require('../auth/strategies');
 
 const requireLogin = passport.authenticate('facebook', { scope: ['email'], authType: 'reauthenticate' });
-const callback = passport.authenticate('facebook', { failureRedirect: '/' });
+const callback = passport.authenticate(['local','facebook'], { failureRedirect: '/api/login' });
 const requireJWT = passport.authenticate('jwt', { session: false });
 
 const path = require('path');
@@ -22,11 +22,11 @@ const m = multer({
   }
 });
 
-indexRouter.get('/upload', (req, res) => {
+indexRouter.get('/upload', requireJWT, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'static/index.html'));
 });
 
-indexRouter.post('/upload', m.array("file"), uploadPage, (req, res, next) => {
+indexRouter.post('/upload', requireJWT, m.array("file"), uploadPage, (req, res, next) => {
   //console.log(req.files);
   res.status(200).json({ files: req.files })
 });
@@ -45,17 +45,21 @@ indexRouter.get('/login', function (req, res) {
   res.render('login');
 });
 
+indexRouter.post('/login',
+  passport.authenticate('local', { successRedirect: '/api/profile',
+                                   failureRedirect: '/api/login',
+                                   failureFlash: true })
+);
+
 // Social login button
 indexRouter.get('/login/facebook', requireLogin);
 
 // User profile page
 indexRouter.get('/profile', callback, (req, res) => {
-  console.log(req.user);
   const user = req.user;
   User.isWhitelisted(user.emails[0].value).then((result) => {
     // If user is not whitelisted do not proceed 
     // any further.
-    console.log(result);
     if (result.rows[0].count === 0) {
       res.render('notwhitelist');
     } else {
@@ -124,6 +128,6 @@ indexRouter.get('/logout', (req, res) => {
   });
 });
 
-indexRouter.post('/:path', renderPage);
+indexRouter.post('/:path', requireJWT, renderPage);
 
 export default indexRouter;

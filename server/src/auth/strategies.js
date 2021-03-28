@@ -1,4 +1,5 @@
 const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
 const JWTStrategy = require('passport-jwt').Strategy;
 
@@ -15,6 +16,30 @@ var cookieExtractor = function(req) {
   }
   return token;
 }
+
+// Username/Password Authentication
+passport.use(new LocalStrategy({
+  usernameField: 'email'
+},
+  function (username, password, done) {
+    User.findOne(username).then((user) => {
+      if (!user || user.rowCount === 0) {
+        return done(null, false, { message: 'Incorrect username.' });
+      }
+      
+      if (user.rows[0]["password"] != password) {
+        return done(null, false, { message: 'Incorrect password.' });
+      }
+
+      return done(null, user);
+    }, (error) => {
+      if (error) { 
+        console.log(err);
+        return done(err); 
+      }
+    });
+  }
+));
 
 // Facebook OAuth2 using Passport JS
 passport.use(new FacebookStrategy({

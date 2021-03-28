@@ -6,6 +6,7 @@ import indexRouter from './routes/index';
 const passport = require('passport');
 const expressSession = require('express-session');
 const morgan = require('morgan')('combined');
+const flash = require('connect-flash');
 
 const app = express();
 app.use(logger('dev'));
@@ -19,6 +20,16 @@ app.use(expressSession({ secret: 'keyboard cat', resave: true, saveUninitialized
 // Configure view engine to render EJS templates.
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
+
+app.use(flash()); // flash messages
+
+app.use(function (req, res, next) {
+    res.locals.success = req.flash('success');
+    res.locals.info = req.flash('info');
+    res.locals.error = req.flash('error');
+    res.locals.user = req.user || null;
+    next();
+});
 
 // Initialize Passport and restore authentication state, if any, from the
 // session.
