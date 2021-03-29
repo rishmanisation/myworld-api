@@ -1,4 +1,5 @@
 import Model from './model';
+import { getPasswordHash } from '../utils/security';
 
 const jwt = require('jwt-simple');
 
@@ -9,7 +10,7 @@ const model = new Model("ud_p_user_profile");
  * @param {Object} user 
  * @param {function} callback 
  */
-function tokenForUser(user, callback) {
+function tokenForUser(user) {
     var timeStamp = new Date().getTime()
     return jwt.encode({ sub: user, iat: timeStamp }, 'secret');
 }
@@ -20,9 +21,9 @@ function tokenForUser(user, callback) {
  * @param {Object} user 
  */
 function updateUserInformation(user) {
-    var firstName = user.name.givenName;
-    var lastName = user.name.familyName;
-    var email = user.emails[0].value;
+    var firstName = user.rows[0]["first_name"];
+    var lastName = user.rows[0]["last_name"];
+    var email = user.rows[0]["user_id"];
     var updateQuery = "update ud_p_user_profile set first_name='" + firstName + "', last_name='" + lastName + "' where user_id='" + email + "'";
     return model.executeQueryString(updateQuery);
 }
@@ -32,7 +33,7 @@ function updateUserInformation(user) {
  * @param {Object} user 
  * @param {function} callback 
  */
-function getAllWhitelisted(user, callback) {
+function getAllWhitelisted(user) {
     var allWhitelistedQuery = "select user_id, concat(first_name, ' ', last_name) as name from ud_p_user_profile";
     return model.executeQueryString(allWhitelistedQuery);
 }
@@ -42,7 +43,7 @@ function getAllWhitelisted(user, callback) {
  * @param {Object} payload 
  * @param {function} callback 
  */
-function getUserByEmail(payload, callback) {
+function getUserByEmail(payload) {
     var email = payload.email;
     var query = "select user_id, first_name, last_name from ud_p_user_profile where user_id='" + email + "'";
     return model.executeQueryString(query);
@@ -53,7 +54,7 @@ function getUserByEmail(payload, callback) {
  * @param {Object} email
  * @param {function} callback
  */
-exports.isWhitelisted = function (email, callback) {
+exports.isWhitelisted = function (email) {
     var checkQuery = 'select count(*) as count from ud_p_user_profile where user_id=' + "'" + email + "'";
     console.log(checkQuery);
     return model.executeQueryString(checkQuery);
@@ -64,9 +65,14 @@ exports.isWhitelisted = function (email, callback) {
  * @param {Object} email
  * @param {function} callback
  */
-exports.whitelistUser = function (email, callback) {
-    var insertQuery = "insert into ud_p_user_profile(user_id, first_name, last_name, password) values('" + email + "', 'test', 'user', 'testpwd')";
-    return model.executeQueryString(insertQuery);
+exports.whitelistUser = function (email) {
+    return getPasswordHash("password").then((result) => {
+        console.log(result);
+        var insertQuery = "insert into ud_p_user_profile(user_id, first_name, last_name, password) values('" + email + "', 'test', 'user', '" + result + "')";
+        return model.executeQueryString(insertQuery);
+    }, (err) => {
+        console.log(err);
+    })
 }
 
 exports.findOne = function(email) {
@@ -81,11 +87,11 @@ exports.findOne = function(email) {
  * @param {Object} user
  * @param {function} callback
  */
-exports.getPayload = function (user, callback) {
+exports.getPayload = function (user) {
     var currUserInfo, allUsers, token;
     return updateUserInformation(user)
         .then(() => {
-            return getUserByEmail({ email: user.emails[0].value });
+            return getUserByEmail({ email: user.rows[0]["user_id"] });
         }, (error) => {
             console.log(error);
         })

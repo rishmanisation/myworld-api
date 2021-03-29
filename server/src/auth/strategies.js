@@ -1,3 +1,5 @@
+import { getPasswordHash, verifyPassword } from '../utils/security';
+
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
@@ -22,14 +24,25 @@ passport.use(new LocalStrategy({
   usernameField: 'email'
 },
   function (username, password, done) {
-    User.findOne(username).then((user) => {
+    return User.findOne(username).then((user) => {
+      console.log(user);
       if (!user || user.rowCount === 0) {
         return done(null, false, { message: 'Incorrect username.' });
       }
       
-      if (user.rows[0]["password"] != password) {
+      /*
+      if (getPasswordHash(user.rows[0]["password"]) != password) {
         return done(null, false, { message: 'Incorrect password.' });
       }
+      */
+      verifyPassword(user.rows[0]["password"], password).then((result) => {
+        if(!result) {
+          return done(null, false, { message: 'Incorrect password.' });
+        }
+      }, (err) => {
+        console.log(err);
+        return;
+      });
 
       return done(null, user);
     }, (error) => {
@@ -45,7 +58,7 @@ passport.use(new LocalStrategy({
 passport.use(new FacebookStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
-    callbackURL: '/api/profile',
+    callbackURL: '/api/tempFB',
     profileFields: ['id', 'emails', 'name'],
   },
   function(accessToken, refreshToken, profile, done) {

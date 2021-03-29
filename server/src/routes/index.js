@@ -9,8 +9,19 @@ const { check } = require('express-validator/check');
 
 require('../auth/strategies');
 
-const requireLogin = passport.authenticate('facebook', { scope: ['email'], authType: 'reauthenticate' });
-const callback = passport.authenticate(['local','facebook'], { failureRedirect: '/api/login' });
+//const requireLogin = passport.authenticate('facebook', { scope: ['email'], authType: 'reauthenticate' });
+const callback = passport.authenticate('local', {
+  successRedirect: '/api',
+  failureRedirect: '/api/login',
+  failureFlash: true
+});
+
+const localAuthCheck = passport.authenticate('local', {
+  failureRedirect: '/api/login',
+  failureFlash: true
+});
+
+//const callbackFB = passport.authenticate('facebook', { failureRedirect: '/api/login' });
 const requireJWT = passport.authenticate('jwt', { session: false });
 
 const path = require('path');
@@ -34,7 +45,7 @@ indexRouter.post('/upload', requireJWT, m.array("file"), uploadPage, (req, res, 
 indexRouter.get('/', function (req, res) {
   // Redirect user to the profile page on successful sign in
   if (req.user) {
-    res.redirect('profile');
+    res.redirect('/api/profile');
   } else {
     res.render('home');
   }
@@ -45,19 +56,17 @@ indexRouter.get('/login', function (req, res) {
   res.render('login');
 });
 
-indexRouter.post('/login',
-  passport.authenticate('local', { successRedirect: '/api/profile',
-                                   failureRedirect: '/api/login',
-                                   failureFlash: true })
-);
+
+indexRouter.post('/login', callback);
 
 // Social login button
-indexRouter.get('/login/facebook', requireLogin);
+//indexRouter.get('/login/facebook', requireLogin);
 
 // User profile page
-indexRouter.get('/profile', callback, (req, res) => {
+indexRouter.get('/profile', (req, res) => {
+  console.log(req.user);
   const user = req.user;
-  User.isWhitelisted(user.emails[0].value).then((result) => {
+  User.isWhitelisted(user.rows[0]["user_id"]).then((result) => {
     // If user is not whitelisted do not proceed 
     // any further.
     if (result.rows[0].count === 0) {
@@ -96,7 +105,6 @@ indexRouter.post('/whitelist', [requireJWT, check('email_id').not().isEmpty().wi
   } else {
     // Entered email address is syntactically correct. Proceed to add the user to the
     // database.
-    console.log(req.body);
     var email_id = req.body.email_id;
     User.whitelistUser(email_id).then((result) => {
       // No errors found. Email address will be stored in the database and the user is redirected
