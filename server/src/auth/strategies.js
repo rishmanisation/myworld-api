@@ -29,26 +29,22 @@ passport.use(new LocalStrategy({
       if (!user || user.rowCount === 0) {
         return done(null, false, { message: 'Incorrect username.' });
       }
-      
-      /*
-      if (getPasswordHash(user.rows[0]["password"]) != password) {
-        return done(null, false, { message: 'Incorrect password.' });
-      }
-      */
+
       verifyPassword(user.rows[0]["password"], password).then((result) => {
+        console.log(result);
         if(!result) {
           return done(null, false, { message: 'Incorrect password.' });
+        } else {
+          return done(null, user);
         }
       }, (err) => {
         console.log(err);
         return;
       });
-
-      return done(null, user);
     }, (error) => {
       if (error) { 
-        console.log(err);
-        return done(err); 
+        console.log(error);
+        return done(error); 
       }
     });
   }

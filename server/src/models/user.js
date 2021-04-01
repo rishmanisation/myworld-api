@@ -67,7 +67,6 @@ exports.isWhitelisted = function (email) {
  */
 exports.whitelistUser = function (email) {
     return getPasswordHash("password").then((result) => {
-        console.log(result);
         var insertQuery = "insert into ud_p_user_profile(user_id, first_name, last_name, password) values('" + email + "', 'test', 'user', '" + result + "')";
         return model.executeQueryString(insertQuery);
     }, (err) => {

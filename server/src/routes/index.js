@@ -3,33 +3,31 @@ import { uploadPage, renderPage } from '../controllers';
 import multer, { memoryStorage } from "multer";
 
 const passport = require('passport');
+const path = require('path');
 const User = require('../models/user');
 const ensureLogin = require('connect-ensure-login');
 const { check } = require('express-validator/check');
 
 require('../auth/strategies');
 
-//const requireLogin = passport.authenticate('facebook', { scope: ['email'], authType: 'reauthenticate' });
-const callback = passport.authenticate('local', {
-  successRedirect: '/api',
-  failureRedirect: '/api/login',
-  failureFlash: true
-});
-
-const localAuthCheck = passport.authenticate('local', {
-  failureRedirect: '/api/login',
-  failureFlash: true
-});
-
-//const callbackFB = passport.authenticate('facebook', { failureRedirect: '/api/login' });
 const requireJWT = passport.authenticate('jwt', { session: false });
 
-const path = require('path');
+const callback = passport.authenticate('local', {
+  failureRedirect: '/api/login',
+  failureFlash: true
+});
+
+/*
+FACEBOOK OAUTH - Work in progress
+const requireLogin = passport.authenticate('facebook', { scope: ['email'], authType: 'reauthenticate' });
+const callbackFB = passport.authenticate('facebook', { failureRedirect: '/api/login' });
+*/
+
 const indexRouter = express.Router();
 const m = multer({
   storage: memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024 // no larger than 5mb
+    fileSize: 5 * 1024 * 1024  // Currently restricting upload filesize to 5MB
   }
 });
 
@@ -38,7 +36,6 @@ indexRouter.get('/upload', requireJWT, (req, res) => {
 });
 
 indexRouter.post('/upload', requireJWT, m.array("file"), uploadPage, (req, res, next) => {
-  //console.log(req.files);
   res.status(200).json({ files: req.files })
 });
 
@@ -57,14 +54,7 @@ indexRouter.get('/login', function (req, res) {
 });
 
 
-indexRouter.post('/login', callback);
-
-// Social login button
-//indexRouter.get('/login/facebook', requireLogin);
-
-// User profile page
-indexRouter.get('/profile', (req, res) => {
-  console.log(req.user);
+indexRouter.post('/login', callback, (req, res) => {
   const user = req.user;
   User.isWhitelisted(user.rows[0]["user_id"]).then((result) => {
     // If user is not whitelisted do not proceed 
@@ -75,11 +65,21 @@ indexRouter.get('/profile', (req, res) => {
       // Generate JWT, store it in cookie and display the 
       // profile page.
       User.getPayload(user).then((result) => {
+        req.session.payload = result;
         res.cookie('jwt', result.token);
-        res.render('profile', result);
+        res.redirect('/api');
       });
     }
-  });
+  })
+});
+
+// Social login button
+//indexRouter.get('/login/facebook', requireLogin);
+
+// User profile page
+indexRouter.get('/profile', requireJWT, (req, res) => {
+  const payload = req.session.payload; 
+  res.render('profile', payload);
 });
 
 // Page where a whitelisted user can whitelist other users. Requires valid JWT.
@@ -91,7 +91,7 @@ indexRouter.get('/whitelist', requireJWT, (req, res) => {
 // Can currently whitelist one user at a time.
 indexRouter.post('/whitelist', [requireJWT, check('email_id').not().isEmpty().withMessage('Email id cannot be empty').isEmail().withMessage('Invalid format for email id')], (req, res) => {
   var errors = req._validationErrors;
-  //console.log(errors);
+
   // If there are any errors with the input email id then display the errors and 
   // prompt the user to enter the input again. This uses express-validation module.
   // The following checks are implemented for email id:
@@ -115,7 +115,6 @@ indexRouter.post('/whitelist', [requireJWT, check('email_id').not().isEmpty().wi
       }
     }, (err) => {
       // Error here indicates that the entered email address is already present in the database.
-      console.log(err);
       if (err) {
         req.session.errors = [{ msg: 'User with the provided email id is already whitelisted.' }];
         req.session.success = false;
