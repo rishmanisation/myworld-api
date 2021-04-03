@@ -1,16 +1,16 @@
-const crypto = require('crypto');
+import * as crypto from 'crypto';
 const crc32c = require('fast-crc32c');
 
-const getFileName = (req, file) => {
+export const getFileName = (req: any, file: any) => {
   var filepath = req.body.username + '/' + req.body.card + '/' + req.body.title + '/' + file.originalname;
   return filepath;
 }
 
-const getFileHashMD5 = (file) => {
+export const getFileHashMD5 = (file: any) => {
   return crypto.createHash('md5').update(file.buffer).digest('base64');
 }
 
-const getFileHashCRC32C = (file) => {
+export const getFileHashCRC32C = (file: any) => {
   return Buffer.from(crc32c.calculate(file.buffer).toString()).toString('base64');
 }
 
@@ -61,9 +61,3 @@ const getFileHashTest = (file) => {
   });
 }
 */
-
-module.exports = {
-  getFileName,
-  getFileHashMD5,
-  getFileHashCRC32C
-}

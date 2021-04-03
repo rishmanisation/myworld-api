@@ -10,7 +10,7 @@ const model = new Model("ud_p_user_profile");
  * @param {Object} user 
  * @param {function} callback 
  */
-function tokenForUser(user) {
+function tokenForUser(user: any) {
     var timeStamp = new Date().getTime()
     return jwt.encode({ sub: user, iat: timeStamp }, 'secret');
 }
@@ -20,7 +20,7 @@ function tokenForUser(user) {
  * Function to update the user information in the pool upon sign-in.
  * @param {Object} user 
  */
-function updateUserInformation(user) {
+function updateUserInformation(user: any) {
     var firstName = user.rows[0]["first_name"];
     var lastName = user.rows[0]["last_name"];
     var email = user.rows[0]["user_id"];
@@ -33,7 +33,7 @@ function updateUserInformation(user) {
  * @param {Object} user 
  * @param {function} callback 
  */
-function getAllWhitelisted(user) {
+function getAllWhitelisted(user: any) {
     var allWhitelistedQuery = "select user_id, concat(first_name, ' ', last_name) as name from ud_p_user_profile";
     return model.executeQueryString(allWhitelistedQuery);
 }
@@ -43,18 +43,19 @@ function getAllWhitelisted(user) {
  * @param {Object} payload 
  * @param {function} callback 
  */
-function getUserByEmail(payload) {
+function getUserByEmail(payload: any) {
     var email = payload.email;
     var query = "select user_id, first_name, last_name from ud_p_user_profile where user_id='" + email + "'";
     return model.executeQueryString(query);
 }
 
+//export class User {
 /**
  * Check whether a given email id is whitelisted or not.
  * @param {Object} email
  * @param {function} callback
  */
-exports.isWhitelisted = function (email) {
+export function isWhitelisted(email: string) {
     var checkQuery = 'select count(*) as count from ud_p_user_profile where user_id=' + "'" + email + "'";
     console.log(checkQuery);
     return model.executeQueryString(checkQuery);
@@ -65,16 +66,16 @@ exports.isWhitelisted = function (email) {
  * @param {Object} email
  * @param {function} callback
  */
-exports.whitelistUser = function (email) {
-    return getPasswordHash("password").then((result) => {
+export function whitelistUser(email: string) {
+    return getPasswordHash("password").then((result: string) => {
         var insertQuery = "insert into ud_p_user_profile(user_id, first_name, last_name, password) values('" + email + "', 'test', 'user', '" + result + "')";
         return model.executeQueryString(insertQuery);
-    }, (err) => {
+    }, (err: any) => {
         console.log(err);
     })
 }
 
-exports.findOne = function(email) {
+export function findOne(email: string) {
     var findQuery = `select user_id, password from ud_p_user_profile where user_id = '${email}'`;
     console.log(findQuery);
     return model.executeQueryString(findQuery);
@@ -86,8 +87,8 @@ exports.findOne = function(email) {
  * @param {Object} user
  * @param {function} callback
  */
-exports.getPayload = function (user) {
-    var currUserInfo, allUsers, token;
+export function getPayload(user: any) {
+    var currUserInfo: any, allUsers: any, token: any;
     return updateUserInformation(user)
         .then(() => {
             return getUserByEmail({ email: user.rows[0]["user_id"] });
@@ -114,6 +115,6 @@ exports.getPayload = function (user) {
         });
 }
 
-
+//}
 
 

@@ -2,7 +2,7 @@ import { getPasswordHash, verifyPassword } from '../utils/security';
 
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
-const FacebookStrategy = require('passport-facebook').Strategy;
+//const FacebookStrategy = require('passport-facebook').Strategy;
 const JWTStrategy = require('passport-jwt').Strategy;
 
 const User = require('../models/user');
@@ -11,7 +11,7 @@ const User = require('../models/user');
  * Retrieves the JWT from the cookie.
  * @param {Object} req 
  */
-var cookieExtractor = function(req) {
+var cookieExtractor = function(req: any) {
   var token = null;
   if(req && req.cookies) {
       token = req.cookies['jwt'];
@@ -23,25 +23,25 @@ var cookieExtractor = function(req) {
 passport.use(new LocalStrategy({
   usernameField: 'email'
 },
-  function (username, password, done) {
-    return User.findOne(username).then((user) => {
+  function (username: string, password: string, done: any) {
+    return User.findOne(username).then((user: any) => {
       console.log(user);
       if (!user || user.rowCount === 0) {
         return done(null, false, { message: 'Incorrect username.' });
       }
 
-      verifyPassword(user.rows[0]["password"], password).then((result) => {
+      verifyPassword(user.rows[0]["password"], password).then((result: boolean) => {
         console.log(result);
         if(!result) {
           return done(null, false, { message: 'Incorrect password.' });
         } else {
           return done(null, user);
         }
-      }, (err) => {
+      }, (err: any) => {
         console.log(err);
         return;
       });
-    }, (error) => {
+    }, (error: any) => {
       if (error) { 
         console.log(error);
         return done(error); 
@@ -50,6 +50,7 @@ passport.use(new LocalStrategy({
   }
 ));
 
+/*
 // Facebook OAuth2 using Passport JS
 passport.use(new FacebookStrategy({
     clientID: process.env.CLIENT_ID,
@@ -61,12 +62,13 @@ passport.use(new FacebookStrategy({
     return done(null, profile);
   })
 );
+*/
 
-passport.serializeUser(function(user, cb) {
+passport.serializeUser(function(user: any, cb: any) {
     cb(null, user);
 });
 
-passport.deserializeUser(function(user, cb) {
+passport.deserializeUser(function(user: any, cb: any) {
     cb(null, user);
 });
 
@@ -74,7 +76,7 @@ passport.deserializeUser(function(user, cb) {
 passport.use(new JWTStrategy({
     jwtFromRequest: cookieExtractor,
     secretOrKey: 'secret'
-  }, function(payload, done){
+  }, function(payload: any, done: any){
     return done(null, payload.sub);
   })
 );

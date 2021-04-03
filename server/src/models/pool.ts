@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
-import dotenv from 'dotenv';
-import { connectionString } from '../settings';
-dotenv.config();
+//import dotenv from 'dotenv';
+//import { connectionString } from '../settings';
+//dotenv.config();
 
 /* FOR DOCKER
 export const pool = new Pool({
@@ -20,6 +20,5 @@ export const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
     database: 'myworld',
-    password: 'rish',
-    port: '5432'
+    password: 'rish'
 });

@@ -6,20 +6,23 @@ import { pool } from './pool';
  * This class is used as the data model with which the API interacts with the DB.
  * 
  */
-class Model {
-  constructor(table) {
+export class Model {
+  pool: any;
+  table: string;
+
+  constructor(table: string) {
     this.pool = pool
     this.table = table;
-    this.pool.on('error', (err, client) => `Error, ${err}, on idle client${client}`);
+    this.pool.on('error', (err: any, client: any) => `Error, ${err}, on idle client${client}`);
   }
 
-  async executeQueryString(query) {
+  async executeQueryString(query: string) {
     return this.pool.query(query);
   }
   /**
    * Function to generate and execute the desired SQL query. 
    */
-  async executeQuery(params, foreignKey, loggedInUser) {
+  async executeQuery(params: any, foreignKey: string, loggedInUser: string) {
     let mainCols = ``;
     if (params["mainCols"]) {
       for (const col of params["mainCols"]) {
@@ -54,9 +57,9 @@ class Model {
   }
 
 
-  async insertQuery(params, values) {
+  async insertQuery(params: any, values: any) {
     let query = "INSERT INTO " + params["mainTable"] + " VALUES('";
-    for(var col in mainCols) {
+    for(var col in params["mainCols"]) {
       query += values[col] + "','";
     }
     query = query.substring(0, query.length-2);

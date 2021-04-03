@@ -1,11 +1,11 @@
-import logger from 'morgan';
-import express from 'express';
-import cookieParser from 'cookie-parser';
 import indexRouter from './routes/index';
 
+const express = require('express');
+const cookieParser = require('cookie-parser');
 const passport = require('passport');
 const expressSession = require('express-session');
 const morgan = require('morgan')('combined');
+const logger = require('morgan');
 const flash = require('connect-flash');
 
 const app = express();
@@ -23,7 +23,7 @@ app.set('view engine', 'ejs');
 
 app.use(flash()); // flash messages
 
-app.use(function (req, res, next) {
+app.use(function (req: any, res: any, next: any) {
     res.locals.success = req.flash('success');
     res.locals.info = req.flash('info');
     res.locals.error = req.flash('error');

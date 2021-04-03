@@ -3,12 +3,14 @@
  * Module dependencies.
  */
 import debug from 'debug';
-import http from 'http';
+//import http from 'http';
 import app from '../app';
+
+const http = require('http');
 /**
  * Normalize a port into a number, string, or false.
  */
-const normalizePort = (val) => {
+const normalizePort = (val: any) => {
   const port = parseInt(val, 10);
   if (Number.isNaN(port)) {
     // named pipe
@@ -35,7 +37,7 @@ const server = http.createServer(app);
 /**
  * Event listener for HTTP server "error" event.
  */
-const onError = (error) => {
+const onError = (error: any) => {
   if (error.syscall !== 'listen') {
     throw error;
   }
@@ -57,15 +59,20 @@ const onError = (error) => {
 
 /**
  * Event listener for HTTP server "listening" event.
- */
+ */ 
+
 const onListening = () => {
   const addr = server.address();
-  const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
+  if(!addr) {
+
+  }
+  const bind = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr!.port}`;
   debug(`Listening on ${bind}`);
 };
+
 /**
  * Listen on provided port, on all network interfaces.
  */
 server.listen(port);
 server.on('error', onError);
-server.on('listening', onListening);
+//server.on('listening', onListening);

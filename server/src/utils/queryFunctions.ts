@@ -1,7 +1,7 @@
 import { pool } from '../models/pool';
-import * as queries from '../utils/queries';
+import * as queries from './queries';
 
-const executeQuery = async (query, params) => {
+export const executeQuery = async (query: string, params: any) => {
     if(query === "foreignKey") {
         return pool.query(queries.getForeignKeyQuery(params["mainTable"], params["joinTable"]));
     } else if(query === "checkIfFileExists") {
@@ -9,9 +9,5 @@ const executeQuery = async (query, params) => {
     }
 
     return null;
-}
-
-module.exports = {
-    executeQuery
 }
 

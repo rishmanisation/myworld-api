@@ -1,4 +1,4 @@
-const getForeignKeyQuery = (mainTable, joinTable) => {
+export const getForeignKeyQuery = (mainTable: string, joinTable: string) => {
     return "SELECT KCU.COLUMN_NAME AS FK_COLUMN" 
     + " FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS TCO"
     + " JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE KCU ON TCO.CONSTRAINT_SCHEMA = KCU.CONSTRAINT_SCHEMA AND TCO.CONSTRAINT_NAME = KCU.CONSTRAINT_NAME"
@@ -10,15 +10,10 @@ const getForeignKeyQuery = (mainTable, joinTable) => {
     + mainTable + "' ORDER BY KCU.TABLE_SCHEMA, KCU.TABLE_NAME, KCU.ORDINAL_POSITION";
 };
 
-const checkFileExistsQuery = (username, md5Hash, crc32cHash) => {
+export const checkFileExistsQuery = (username: string, md5Hash: string, crc32cHash: string) => {
     return `SELECT COUNT(*)`
     + ` FROM UD_P_UPLOADED_FILES`
     + ` WHERE USER_ID LIKE '%${username}%'`
     + ` AND FILE_HASH_MD5 LIKE '%${md5Hash}%'`
     + ` AND FILE_HASH_CRC32C LIKE '%${crc32cHash}%'`;
-}
-
-module.exports = {
-    getForeignKeyQuery,
-    checkFileExistsQuery
 }
