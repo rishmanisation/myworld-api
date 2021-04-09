@@ -6,12 +6,12 @@ export const getFileName = (req: any, file: any) => {
   return filepath;
 }
 
-export const getFileHashMD5 = (file: any) => {
-  return crypto.createHash('md5').update(file.buffer).digest('base64');
+export const getFileHashMD5 = (strOrBuffer: any) => {
+  return crypto.createHash('md5').update(strOrBuffer).digest('base64');
 }
 
-export const getFileHashCRC32C = (file: any) => {
-  return Buffer.from(crc32c.calculate(file.buffer).toString()).toString('base64');
+export const getFileHashCRC32C = (strOrBuffer: any) => {
+  return Buffer.from(crc32c.calculate(strOrBuffer).toString()).toString('base64');
 }
 
 /*

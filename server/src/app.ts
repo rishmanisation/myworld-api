@@ -18,7 +18,8 @@ app.use(express.static('./views/static'));
 app.use(expressSession({ secret: 'keyboard cat', resave: true, saveUninitialized: true, rolling: true, cookie: { expiresIn: 20000 } }));
 
 // Configure view engine to render EJS templates.
-app.set('views', __dirname + '/views');
+//console.log(__dirname);
+app.set('views', './src/views');
 app.set('view engine', 'ejs');
 
 app.use(flash()); // flash messages

@@ -6,10 +6,7 @@ const data = require('../../resources/cards.json');
 
 const { Storage } = require('@google-cloud/storage');
 
-const projectId = 'probable-sprite-307302';
-const keyFile = '../../resources/gcpCredentials.json';
-
-const storage = new Storage({ projectId, keyFile });
+const storage = new Storage();
 const bucketName = 'rishabh-test-bkt';
 const bucket = storage.bucket(bucketName);
 
@@ -19,54 +16,28 @@ const bucket = storage.bucket(bucketName);
  * by the user.
  */
 
-const renderCard = async (card: string, loggedInUser: string, values:any) => {
+const renderCard = async (card: string, loggedInUser: string, values: any) => {
 
-  try{
-  const params = data[card];
-  const mainModel = new Model(params["mainTable"]);
-
-  //var foreignKey = "";
-  if(params["joinTable"] && params["joinCols"]) { 
-    return executeQuery('foreignKey', params)
-    .then(result => { return result!.rows[0]["fk_column"]; }, error => { console.log(error); return; })
-    .then(result => { return mainModel.executeQuery(params, result, loggedInUser); }, error => { console.log(error); return; })
-    .then(result => { return result!.rows; }, error => { console.log(error); return; });
-  } else if(params["method"] === "INSERT") {
-    return mainModel.insertQuery(params, values)
-    .then(result => { return result!.rows; });
-  } else {
-    return mainModel.executeQuery(params, "", loggedInUser)
-    .then(result => { return result!.rows; });
-  }
-} catch(error) {
-  return { error: error.stack };
-}
-  /*
   try {
     const params = data[card];
     const mainModel = new Model(params["mainTable"]);
 
-    
-    let foreignKey: string = "";
+    //var foreignKey = "";
     if (params["joinTable"] && params["joinCols"]) {
-      const foreignKeyQuery = await executeQuery('foreignKey', params);
-      foreignKey = foreignKeyQuery.rows[0]["fk_column"];
-    }
-
-    var resultQuery;
-    if(params["method"] === "INSERT") {
-      resultQuery = await mainModel.insertQuery(params, values);
+      return executeQuery('foreignKey', params)
+        .then(result => { return result!.rows[0]["fk_column"]; }, error => { console.log(error); return; })
+        .then(result => { return mainModel.executeQuery(params, result, loggedInUser); }, error => { console.log(error); return; })
+        .then(result => { return result!.rows; }, error => { console.log(error); return; });
+    } else if (params["method"] === "INSERT") {
+      return mainModel.insertQuery(params, values)
+        .then(result => { return result!.rows; });
     } else {
-      resultQuery = await mainModel.executeQuery(params, foreignKey, loggedInUser);
+      return mainModel.executeQuery(params, "", loggedInUser)
+        .then(result => { return result!.rows; });
     }
-    
-
-    return resultQuery.rows;
-    
-  } catch (err) {
-    return { err: err.stack };
+  } catch (error) {
+    return { error: error.stack };
   }
-  */
 };
 
 /**
@@ -76,42 +47,24 @@ const renderCard = async (card: string, loggedInUser: string, values:any) => {
 export const renderPage = async (req: any, res: any) => {
   try {
     const cards: Array<string> = req.body["cards"];
-    const response : {[key: string]: any } = {
+    const response: { [key: string]: any } = {
       [req.body["key"]]: {}
     };
 
     cards.forEach(card => {
       renderCard(card, req.body["loggedInUser"], [])
-      .then((result) => {
-        response[req.body["key"]][card] = result;
-      }, (error) => {
-        return res.status(500).json({ response: error });
-      });
+        .then((result) => {
+          response[req.body["key"]][card] = result;
+        }, (error) => {
+          return res.status(500).json({ response: error });
+        });
     });
 
     return res.status(200).json({ response: response });
-
-    /*
-    for (var card of cards) {
-      
-      let resp = await renderCard(card, req.body["loggedInUser"], []);
-      if(resp["err"]) {
-        return res.status(500).json({ response: resp["err"] });
-      } else {
-        const key: string = req.body["key"];
-        response[key][card] = resp;
-      }
-      
-     renderCard(card, req.body["loggedInUser"], [])
-     .then()
-    }
-
-    return res.status(200).json({ response: response });
-    */
   } catch (err) {
     return res.status(500).json({ response: err.stack });
   }
-  
+
 };
 
 export const uploadPage = (req: any, res: any, next: any) => {
@@ -120,54 +73,68 @@ export const uploadPage = (req: any, res: any, next: any) => {
     return next();
   }
 
-  var promises: Array<any> = [];
+  try {
 
-  req.files.forEach((file: any, index: any) => {
-    const blob = bucket.file(getFileName(req, file));
-    const fileHashMD5 = getFileHashMD5(file);
-    const fileHashCRC32C = getFileHashCRC32C(file);
+    var promises: Array<Promise<void>> = [];
 
-    var doesFileNameExist;
-    blob.exists().then((result: boolean) => {
-      console.log(result);
-      doesFileNameExist = result;
-    });
-
-    var params = {
-      "username": req.body.username,
-      "md5Hash": fileHashMD5,
-      "crc32cHash": fileHashCRC32C
-    }
-    var doesFileContentExist;
-    executeQuery("checkIfFileExists", params).then((result) => {
-      doesFileContentExist = (result!.rows[0] > 0);
-    });
-
-    var promise;
-    if(doesFileNameExist) {
-      if(doesFileContentExist) {
-        promise = Promise.resolve();
-      }
+    var metadataArr: Array<any> = [];
+    if (req.body.metadata) {
+      console.log(req.body.metadata);
+      metadataArr = JSON.parse(req.body.metadata);
     } else {
-        promise = new Promise<void>((resolve, reject) => {
+      for (var i = 0; i < req.files.length; i++) {
+        metadataArr.push({});
+      }
+    }
+
+    req.files.forEach((file: any, index: number) => {
+      const blob = bucket.file(getFileName(req, file));
+      const fileHashMD5 = getFileHashMD5(file.buffer);
+      const fileHashCRC32C = getFileHashCRC32C(file.buffer);
+      const fileNameHash = getFileHashMD5(file.originalname);
+
+      var params = {
+        "username": req.body.username,
+        "md5Hash": fileHashMD5,
+        "crc32cHash": fileHashCRC32C
+      }
+
+      var doesFileNameExist;
+      var doesFileContentExist;
+
+      blob.exists().then((result: boolean) => {
+        doesFileNameExist = result;
+      });
+
+
+      executeQuery("checkIfFileExists", params).then((result) => {
+        doesFileContentExist = (result!.rows[0] > 0);
+      });
+
+      if (doesFileNameExist && doesFileContentExist) {
+        promises.push(Promise.resolve());
+      } else {
+        var promise = new Promise<void>((resolve, reject) => {
           const blobStream = blob.createWriteStream({
-            resumable: false,
+            resumable: true,
             md5Hash: fileHashMD5,
             crc32c: fileHashCRC32C,
             metadata: {
-              contentType: file.mimetype
+              contentType: file.mimetype,
+              metadata: metadataArr[index]
             }
           });
-    
+
           blobStream.end(file.buffer);
-    
+
           blobStream.on("finish", async () => {
             try {
               const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
               blob.cloudStorageObject = file.originalname;
               await blob.makePublic();
               blob.cloudStoragePublicUrl = publicUrl;
-              var values = {
+              var values: { [key: string]: any } = {
+                "FILE_NAME_HASH": fileNameHash,
                 "USER_ID": req.body.username,
                 "FILENAME": file.originalname,
                 "FILE_GCP_PATH": blob.name,
@@ -182,23 +149,25 @@ export const uploadPage = (req: any, res: any, next: any) => {
               reject(err);
             }
           });
-    
+
           blobStream.on("error", (err: any) => {
             blob.cloudStorageError = err
             reject(err);
           });
         });
-    }
 
-    promises.push(promise);
-  })
-
-  Promise.all(promises)
-    .then(_ => {
-      promises = [];
-      next();
+        promises.push(promise);
+      }
     })
-    .catch(next);
 
+    Promise.all(promises)
+      .then(_ => {
+        promises = [];
+        next();
+      })
+      .catch(next);
+  } catch (err) {
+    res.status(500).send(`Error. ${err}`);
+  }
 }
 

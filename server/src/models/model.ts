@@ -57,12 +57,12 @@ export class Model {
   }
 
 
-  async insertQuery(params: any, values: any) {
-    let query = "INSERT INTO " + params["mainTable"] + " VALUES('";
-    for(var col in params["mainCols"]) {
-      query += values[col] + "','";
-    }
-    query = query.substring(0, query.length-2);
+  async insertQuery(params: any, values: { [key: string]: any }) {
+    let query = "INSERT INTO " + params["mainTable"] + " VALUES(";
+    params["mainCols"].forEach((col: string) => {
+      query += `'${values[col]}',`;
+    });
+    query = query.substring(0, query.length-1) + `) ON CONFLICT (${params["mainCols"][0]}) DO NOTHING`;
     console.log(query);
     return this.pool.query(query);
   }
