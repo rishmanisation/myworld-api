@@ -1,5 +1,6 @@
-import * as express from 'express';
-import { uploadPage, renderPage } from '../controllers';
+import { Request, Response, Router } from 'express';
+import { Session } from 'express-session';
+import { renderPage, gcpUpload } from '../controllers';
 import * as multer from "multer";
 
 const passport = require('passport');
@@ -7,6 +8,21 @@ const path = require('path');
 const User = require('../models/user');
 const ensureLogin = require('connect-ensure-login');
 const { check } = require('express-validator/check');
+
+const { Storage } = require('@google-cloud/storage');
+
+const storage = new Storage();
+const bucketName = 'rishabh-test-bkt';
+const bucket = storage.bucket(bucketName);
+
+export type MySession = Session & {
+  payload?: { [key: string]: any }
+}
+
+export type MyRequest = Request & {
+  user?: any;
+  session: MySession
+};
 
 /**
  * Authentication Strategies
@@ -24,7 +40,7 @@ const requireLogin = passport.authenticate('facebook', { scope: ['email'], authT
 const callbackFB = passport.authenticate('facebook', { failureRedirect: '/api/login' });
 */
 
-const indexRouter = express.Router();
+const indexRouter = Router();
 
 // Multer middleware to handle file uploading to Google Cloud Storage
 const m = multer({
@@ -48,9 +64,43 @@ const m = multer({
  * 
  * Use as a ref for a file upload button.
  */
-indexRouter.post('/upload', requireJWT, m.array("file"), uploadPage, (req: express.Request, res: express.Response, next: any) => {
-  res.status(200).json({ success: true, files: req.files })
+indexRouter.post('/upload', requireJWT, m.array("file"), async (req: MyRequest, res: Response, next: any) => {
+
+  try {
+    var metadataArr: Array<any> = [];
+    if (req.body.metadata) {
+      console.log(req.body.metadata);
+      metadataArr = JSON.parse(req.body.metadata);
+    } else {
+      for (var i = 0; i < req.files.length; i++) {
+        metadataArr.push({});
+      }
+    }
+
+    const files = req.files as Express.Multer.File[];
+
+    if (files) {
+      var resFiles: Array<any> = [];
+      var resResult: Array<any> = [];
+      
+      files.forEach((file: any, index: number) => {
+        gcpUpload(bucket, req, file, metadataArr[index], index)
+          .then((result: { [key: string]: any }) => {
+            console.log(result);
+            resFiles.push(result["file"]);
+            resResult.push(result["result"]);
+          });
+      });
+
+      return res.status(200).json({ success: true, files: files });
+    } else {
+      return res.status(404).send("File not found");
+    }
+  } catch (err) {
+    return res.status(500).send(`Error. ${err}`);
+  }
 });
+
 
 /**
  * POST /api/login - Endpoint to handle the user session management flow using PassportJS middleware.
@@ -64,9 +114,9 @@ indexRouter.post('/upload', requireJWT, m.array("file"), uploadPage, (req: expre
  * 
  * Use this endpoint as the ref for a login button.
  */
-indexRouter.post('/login', callback, (req: express.Request, res: express.Response) => {
+indexRouter.post('/login', callback, (req: MyRequest, res: Response) => {
   const user = req.user;
-  User.isWhitelisted(user.rows[0]["user_id"]).then((result: any) => {
+  User.isWhitelisted(user!.rows[0]["user_id"]).then((result: any) => {
     // If user is not whitelisted do not proceed 
     // any further.
     if (result.rows[0].count === 0) {
@@ -89,7 +139,7 @@ indexRouter.post('/login', callback, (req: express.Request, res: express.Respons
 //indexRouter.get('/login/facebook', requireLogin);
 
 // Route to take user back to the welcome screen.
-indexRouter.get('/logout', (req: express.Request, res: express.Response) => {
+indexRouter.get('/logout', (req: MyRequest, res: Response) => {
   req.session.destroy((err: any) => {
     if (err) {
       throw err;

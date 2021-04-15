@@ -3,18 +3,18 @@ import { Pool } from 'pg';
 //import { connectionString } from '../settings';
 //dotenv.config();
 
-
+/*
 export const pool = new Pool({
     user: 'lenio',
     host: 'yash-db',
     database: 'yash',
     password: '1234'
 });
+*/
 
 
-/*
 
-FOR LOCAL - RISHABH
+//FOR LOCAL - RISHABH
 
 export const pool = new Pool({
     user: 'postgres',
@@ -22,4 +22,3 @@ export const pool = new Pool({
     database: 'myworld',
     password: 'rish'
 });
-*/

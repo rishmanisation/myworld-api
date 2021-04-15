@@ -1,10 +1,9 @@
 import { getPasswordHash, verifyPassword } from '../utils/security';
+import { Strategy as LocalStrategy } from 'passport-local';
+import { Strategy as JWTStrategy } from 'passport-jwt';
 
 const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
 //const FacebookStrategy = require('passport-facebook').Strategy;
-const JWTStrategy = require('passport-jwt').Strategy;
-
 const User = require('../models/user');
 
 /**
@@ -64,12 +63,12 @@ passport.use(new FacebookStrategy({
 );
 */
 
-passport.serializeUser(function(user: any, cb: any) {
-    cb(null, user);
+passport.serializeUser(function(user: any, done: any) {
+    done(null, user);
 });
 
-passport.deserializeUser(function(user: any, cb: any) {
-    cb(null, user);
+passport.deserializeUser(function(user: any, done: any) {
+    done(null, user);
 });
 
 // JWT authentication using Passport JS

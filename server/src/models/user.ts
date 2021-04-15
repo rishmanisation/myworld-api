@@ -76,7 +76,7 @@ export function whitelistUser(email: string) {
 }
 
 export function findOne(email: string) {
-    var findQuery = `select user_id, password from ud_p_user_profile where user_id = '${email}'`;
+    var findQuery = `select user_id, first_name, last_name, password from ud_p_user_profile where user_id = '${email}'`;
     console.log(findQuery);
     return model.executeQueryString(findQuery);
 }

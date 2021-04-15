@@ -25,6 +25,6 @@
     "fileUploadCard" : {
         "method": "INSERT",
         "mainTable": "ud_p_uploaded_files",
-        "mainCols": ["USER_ID","FILENAME","FILE_GCP_PATH","FILE_HASH","FILETYPE","ISACTIVE"]
+        "mainCols": ["FILE_NAME_HASH","USER_ID","FILENAME","FILE_GCP_PATH","FILE_HASH","FILETYPE","ISACTIVE"]
     }
 }
