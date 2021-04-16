@@ -22,7 +22,6 @@ export const gcpUpload = async (bucket: any, req: any, file: any, metadata: any,
   
       blobStream.on("finish", async () => {
         try {
-          console.log("FINALLY HERE");
           const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
           blob.cloudStorageObject = file.originalname;
           var values: { [key: string]: any } = {

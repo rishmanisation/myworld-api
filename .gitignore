@@ -5,3 +5,4 @@ coverage
 build/
 myworld-tooling/my_env
 server/resources/gcpCredentials.json
+tmp/
